@@ -1,3 +1,7 @@
+//
+// Created by heyuyi on 6/28/16.
+//
+
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,11 +34,13 @@ int main() {
     int i;
     printf("myServer is starting...\n");
 
+    // open socket
     if((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         fprintf(stderr, "socket error\n");
         exit(1);
     }
 
+    // socket binds address(port 8082)
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(8082);
@@ -44,22 +50,27 @@ int main() {
         exit(2);
     }
 
+    // start listening socket
     if(listen(listenfd, 1024) < 0) {
         fprintf(stderr, "listen error\n");
         exit(3);
     }
 
+    // initialize mutex
     mutex_init();
 
+    // profork PID_NUM child processes
     for (i = 0; i < PID_NUM; ++i) {
         if((pool[i] = fork()) == 0)
+            // invoke child process function
             childp(listenfd);
         else if(pool[i] < 0) {
-            fprintf(stderr, "mutex_init error\n");
+            fprintf(stderr, "fork error\n");
             exit(4);
         }
     }
 
+    // set SIGINT signal callback function
     act.sa_handler = sig_int;
     sigemptyset(&act.sa_mask);
     act.sa_flags = 0;
@@ -75,6 +86,10 @@ int main() {
         pause();
 }
 
+/*
+ * SIGINT signal callback function.
+ * Close the listening socket and kill all child process.
+ */
 static void sig_int(int signo)
 {
     pid_t pid;
@@ -91,6 +106,9 @@ static void sig_int(int signo)
     exit(0);
 }
 
+/*
+ * initialize a mutex shared by all the child processes.
+ */
 static void mutex_init(void)
 {
     pthread_mutexattr_t mattr;
@@ -117,6 +135,11 @@ static void mutex_init(void)
     }
 }
 
+/*
+ * Child process function.
+ * Accept a socket from client request, which need get mutex first.
+ * Then start the web service.
+ */
 static void childp(int fd)
 {
     struct sockaddr_in cliaddr;
@@ -131,6 +154,7 @@ static void childp(int fd)
         pthread_mutex_unlock(mptr);
         printf("PID(%d): Client(%s:%d) has accepted...\n", getpid(), inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
         //transmit2(connfd, STDOUT_FILENO);
+        // web service
         web_serve(connfd);
         close(connfd);
         printf("PID(%d): Client(%s:%d) has disconnected.\n", getpid(), inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));

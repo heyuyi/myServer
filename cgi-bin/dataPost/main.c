@@ -22,16 +22,20 @@ int main() {
     float longitude, latitude;
     MYSQL *conn;
 
+    // Get environment variables.
     if (!plen)
         exit(1);
     len = atoi(plen);
+
+    // Write request from STDIN(redirect to the pipe which connects with father process).
     if (readn(STDIN_FILENO, databuf, len) != len)
         exit(1);
     strrmsp(databuf, len);
     sscanf(databuf, "data={%[^:]:[%[^,],%f,%[^,],%f]}", userID, long_f, &longitude, lat_f, &latitude);
-//    fprintf(stderr, "%s\n%s\n%f\n%s\n%f\n", userID, long_f, longitude, lat_f, latitude);
+    //fprintf(stderr, "%s\n%s\n%f\n%s\n%f\n", userID, long_f, longitude, lat_f, latitude);
 
     if (!(strcmp(long_f, "E") && strcmp(long_f, "W")) && !(strcmp(lat_f, "N") && strcmp(lat_f, "S"))) {
+        // Get data from database.
         conn = mysql_init(NULL);
         if (!mysql_real_connect(conn, "localhost", "root", "heyuyi", "myServer", 0, NULL, 0)) {
             fprintf(stderr, "%s\n", mysql_error(conn));
@@ -39,7 +43,7 @@ int main() {
         }
 
         sprintf(databuf, CMD, userID, long_f, longitude, lat_f, latitude);
-//        fprintf(stderr, "%s\n", databuf);
+        //fprintf(stderr, "%s\n", databuf);
         if (mysql_query(conn, databuf))
             strcpy(databuf, "Welcome to use myServer.\r\nThe record you posted is incorrect.");
         else
@@ -48,6 +52,7 @@ int main() {
     } else
         strcpy(databuf, "Welcome to use myServer.\r\nThe record you posted is incorrect.");
 
+    // Write response to STDOUT(redirect to socket)
     sprintf(headbuf, WEB_HANDER, "200 OK", "text/plain", strlen(databuf));
     writen(STDOUT_FILENO, headbuf, strlen(headbuf));
     writen(STDOUT_FILENO, databuf, strlen(databuf));
@@ -55,6 +60,9 @@ int main() {
     exit(0);
 }
 
+/*
+ * Delete the ' ' from the str.
+ */
 void strrmsp(char *str, size_t n)
 {
     int i, j;

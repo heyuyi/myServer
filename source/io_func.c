@@ -8,6 +8,9 @@
 
 #include "include/io_func.h"
 
+/*
+ * Keep reading until n bytes have been read successfully.
+ */
 ssize_t readn(int fd, void *ptr, size_t n)
 {
     char *p = ptr;
@@ -27,6 +30,9 @@ ssize_t readn(int fd, void *ptr, size_t n)
     return (n - nleft);
 }
 
+/*
+ * Keep writing until n bytes have been writen successfully.
+ */
 ssize_t writen(int fd, const void *ptr, size_t n)
 {
     const char *p = ptr;
@@ -46,6 +52,10 @@ ssize_t writen(int fd, const void *ptr, size_t n)
     return n;
 }
 
+/*
+ * Read a byte one time and Check if it is '\n'.
+ * This function is very slow.
+ */
 ssize_t readline(int fd, void *ptr, size_t n) {
     char *p = ptr;
     ssize_t nread;
@@ -70,6 +80,9 @@ ssize_t readline(int fd, void *ptr, size_t n) {
     return i;
 }
 
+/*
+ * initialize iobuf_t structure.
+ */
 void iobuf_init(iobuf_t *iobuf, int fd)
 {
     iobuf->fd = fd;
@@ -77,6 +90,10 @@ void iobuf_init(iobuf_t *iobuf, int fd)
     iobuf->ptr = iobuf->buf;
 }
 
+/*
+ * Read bytes as many as possible.
+ * And store them in the iobuf_t's buf.
+ */
 static ssize_t readb(iobuf_t *iobuf, void *usrbuf, size_t n)
 {
     ssize_t nread;
@@ -101,6 +118,10 @@ static ssize_t readb(iobuf_t *iobuf, void *usrbuf, size_t n)
     return nread;
 }
 
+/*
+ * Read a line from iobuf_t's buf.
+ * This will be much faster than readline.
+ */
 ssize_t readbline(iobuf_t *iobuf, void *usrbuf, size_t n)
 {
     char *p = usrbuf;

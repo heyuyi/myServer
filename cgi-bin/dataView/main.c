@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
     MYSQL_ROW row;
     int len, rows;
 
+    // Get environment variables.
     cgiargs = getenv(QUERY_STRING);
     if (cgiargs) {
         len = atoi(cgiargs);
@@ -32,6 +33,7 @@ int main(int argc, char *argv[]) {
     } else
         strcpy(buf, "10");
 
+    // Read from database.
     conn = mysql_init(NULL);
     if (!mysql_real_connect(conn, "localhost", "root", "heyuyi", "myServer", 0, NULL, 0)) {
         fprintf(stderr, "%s\n", mysql_error(conn));
@@ -48,6 +50,7 @@ int main(int argc, char *argv[]) {
     rows = mysql_num_rows(res);
     if (mysql_num_fields(res) != 6)
         exit(2);
+    // Write response to STDOUT(redirect to socket)
     sprintf(databuf, "<html><title>Data view</title>");
     sprintf(databuf, "%s<body bgcolor=""ffffff"">\r\n", databuf);
     sprintf(databuf, "%sThe lastest %d groups of data in the database:\r\n", databuf, rows);

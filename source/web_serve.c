@@ -22,6 +22,9 @@ typedef struct {
     char contlen[16];
 } header_t;
 
+/*
+ * initialize header_t structure.
+ */
 void header_init(header_t *header)
 {
     header->method[0]   = '\0';
@@ -31,6 +34,9 @@ void header_init(header_t *header)
     header->contlen[0]  = '\0';
 }
 
+/*
+ * Get file and cgiargs from uri.
+ */
 int web_uri(const char *uri, char *file, char *cgiargs)
 {
     char *p = strchr(uri, '?');
@@ -50,6 +56,10 @@ int web_uri(const char *uri, char *file, char *cgiargs)
     }
 }
 
+/*
+ * Read the request header.
+ * Record the variables in the header_t structure.
+ */
 int web_header(iobuf_t *iobuf, header_t *header)
 {
     char tempbuf[TEMP_SIZE];
@@ -70,6 +80,9 @@ int web_header(iobuf_t *iobuf, header_t *header)
     }
 }
 
+/*
+ * Return web error.
+ */
 void web_error(int fd, const char *status, const char *msg)
 {
     char databuf[MAXBUF_SIZE], headbuf[LINE_SIZE];
@@ -84,6 +97,9 @@ void web_error(int fd, const char *status, const char *msg)
     writen(fd, databuf, strlen(databuf));
 }
 
+/*
+ * Response a static file.
+ */
 void web_file(int fd, const char *file, int size)
 {
     char headbuf[LINE_SIZE];
@@ -109,6 +125,10 @@ void web_file(int fd, const char *file, int size)
     close(ffd);
 }
 
+/*
+ * Set the environment variables int the child process,
+ * before it exec the application.
+ */
 void web_setenv(header_t *header)
 {
     if (header->method[0])
@@ -121,6 +141,10 @@ void web_setenv(header_t *header)
         setenv(CONTENT_LENGTH, header->contlen, 1);
 }
 
+/*
+ * Exec a dynamic application in the GET request.
+ * Redirect the STDOUT. The application do its own job.
+ */
 void web_exec_get(int fd, header_t *header)
 {
     char arg0[LINE_SIZE];
@@ -136,6 +160,11 @@ void web_exec_get(int fd, header_t *header)
     wait(NULL);
 }
 
+/*
+ * Exec a dynamic application in the POST request.
+ * Redirect the STDOUT and STDIN. The application do its own job.
+ * Using a pair of pipes between the two processes.
+ */
 void web_exec_post(int fd, int len, iobuf_t *iobuf, header_t *header)
 {
     pid_t pid;
@@ -150,16 +179,19 @@ void web_exec_post(int fd, int len, iobuf_t *iobuf, header_t *header)
     if ((pid = fork()) < 0) {
         return;
     } else if (pid == 0) {
+        // Child process reads data from pipe, write response to socket.
         close(pipefd[1]);
         dup2(pipefd[0], STDIN_FILENO);
         close(pipefd[0]);
         dup2(fd, STDOUT_FILENO);
 
+        // Set the environment variables and exec the application.
         p = strrchr(header->filepath, '/');
         strcpy(arg0, p+1);
         web_setenv(header);
         execl(header->filepath, arg0, NULL);
     } else {
+        // Father process reads data from socket, write the data to the pipe.
         close(pipefd[0]);
 
         if (iobuf->cnt != 0) {
@@ -173,10 +205,16 @@ void web_exec_post(int fd, int len, iobuf_t *iobuf, header_t *header)
             len -= n;
         }
         close(pipefd[1]);
+        // Waiting for the child process.
         wait(NULL);
     }
 }
 
+/*
+ * web service.
+ * Analyse the header. Get the method, uri and other variables.
+ * Invoke the application or return error.
+ */
 void web_serve(int fd)
 {
     header_t header;
@@ -187,6 +225,7 @@ void web_serve(int fd)
     struct stat sbuf;
     int tmp, len;
 
+    // Read header.
     header_init(&header);
     iobuf_init(&iobuf, fd);
     readbline(&iobuf, tempbuf, TEMP_SIZE);
@@ -202,7 +241,9 @@ void web_serve(int fd)
         web_error(fd, "404 Not found", tempbuf);
         return;
     }
+
     if (!strcmp(header.method, "GET")) {
+        // GET method
         if (tmp) {
             if (S_ISREG(sbuf.st_mode) && (S_IXUSR & sbuf.st_mode)) {
                 web_exec_get(fd, &header);
@@ -221,6 +262,7 @@ void web_serve(int fd)
             }
         }
     } else if (!strcmp(header.method, "POST")) {
+        // POST method
         if (len == 0) {
             sprintf(tempbuf, "myServer can not serve the request: %s = 0", CONTENT_LENGTH);
             web_error(fd, "400 Bad Request", tempbuf);
