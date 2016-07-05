@@ -76,7 +76,7 @@ void web_error(int fd, const char *status, const char *msg)
     sprintf(databuf, "<html><title>Server Error</title>");
     sprintf(databuf, "%s<body bgcolor=""ffffff"">\r\n", databuf);
     sprintf(databuf, "%s%s\r\n", databuf, status);
-    sprintf(databuf, "%s<p>%s\r\n", databuf, msg);
+    sprintf(databuf, "%s<p>%s</p>\r\n", databuf, msg);
     sprintf(databuf, "%s<hr><em>myServer powered by heyuyi</em>\r\n", databuf);
 
     sprintf(headbuf, WEB_HANDER, status, "text/html", strlen(databuf));
