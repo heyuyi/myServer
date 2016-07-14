@@ -88,7 +88,7 @@ int main() {
 
 /*
  * SIGINT signal callback function.
- * Close the listening socket and kill all child process.
+ * Close the listening socket and kill all child processes.
  */
 static void sig_int(int signo)
 {
@@ -107,7 +107,8 @@ static void sig_int(int signo)
 }
 
 /*
- * initialize a mutex shared by all the child processes.
+ * Initialize a mutex shared by all the child processes.
+ * It's used to ensure that only child process is blocked on the accept function.
  */
 static void mutex_init(void)
 {
@@ -137,7 +138,7 @@ static void mutex_init(void)
 
 /*
  * Child process function.
- * Accept a socket from client request, which need get mutex first.
+ * Accept a socket from client request, which need get the mutex first.
  * Then start the web service.
  */
 static void childp(int fd)

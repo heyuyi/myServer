@@ -23,7 +23,7 @@ typedef struct {
 } header_t;
 
 /*
- * initialize header_t structure.
+ * Initialize header_t structure.
  */
 void header_init(header_t *header)
 {
@@ -81,7 +81,7 @@ int web_header(iobuf_t *iobuf, header_t *header)
 }
 
 /*
- * Return web error.
+ * Return web error to the client.
  */
 void web_error(int fd, const char *status, const char *msg)
 {
@@ -98,7 +98,7 @@ void web_error(int fd, const char *status, const char *msg)
 }
 
 /*
- * Response a static file.
+ * Response a static file to the client.
  */
 void web_file(int fd, const char *file, int size)
 {
@@ -126,7 +126,7 @@ void web_file(int fd, const char *file, int size)
 }
 
 /*
- * Set the environment variables int the child process,
+ * Set the environment variables in the forked child process,
  * before it exec the application.
  */
 void web_setenv(header_t *header)

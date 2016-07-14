@@ -9,6 +9,10 @@
 
 #include "include/io_func.h"
 
+/*
+ * Basic serve using socket.
+ * Write to fd2 whatever it reads from fd1.
+ */
 void transmit(int fd1, int fd2)
 {
     char buf[4096];
@@ -27,6 +31,10 @@ void transmit(int fd1, int fd2)
     }
 }
 
+/*
+ * Basic serve using socket.
+ * Read and write communication between fd1 and fd2.
+ */
 void transmit2(int fd1, int fd2)
 {
     char buf[4096];

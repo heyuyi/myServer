@@ -81,7 +81,7 @@ ssize_t readline(int fd, void *ptr, size_t n) {
 }
 
 /*
- * initialize iobuf_t structure.
+ * Initialize iobuf_t structure.
  */
 void iobuf_init(iobuf_t *iobuf, int fd)
 {
